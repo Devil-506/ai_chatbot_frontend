@@ -1,4 +1,4 @@
-// FloatingChatBubble.jsx - PERFECTLY ADAPTIVE VERSION
+// FloatingChatBubble.jsx - UPDATED FOR DEPLOYED BACKEND
 import React, { useState, useRef, useEffect } from 'react';
 import { Send, X, Plus, Trash2, Download, Menu, ThumbsUp, ThumbsDown } from 'lucide-react';
 import io from 'socket.io-client';
@@ -20,6 +20,9 @@ const FloatingChatBubble = () => {
   const widgetRef = useRef(null);
   const inputRef = useRef(null);
 
+  // Backend URL - UPDATE THIS TO YOUR ACTUAL BACKEND URL
+  const BACKEND_URL = 'https://ai-chatbot-backend-ouvg.onrender.com';
+
   // Medical quick actions
   const quickActions = [
     { emoji: '🤒', text: 'أعراض البرد', prompt: 'لدي أعراض البرد والإنفلونزا، ما النصائح؟' },
@@ -28,12 +31,17 @@ const FloatingChatBubble = () => {
     { emoji: '❤️', text: 'نصائح وقائية', prompt: 'ما هي النصائح للوقاية من الأمراض؟' }
   ];
 
-  // Connect to backend
+  // Connect to deployed backend
   useEffect(() => {
-    const newSocket = io('http://localhost:5000');
+    const newSocket = io(BACKEND_URL, {
+      transports: ['websocket', 'polling'],
+      timeout: 10000
+    });
+    
     setSocket(newSocket);
 
     newSocket.on('connect', () => {
+      console.log('✅ Connected to backend:', BACKEND_URL);
       setIsConnected(true);
       if (messages.length === 0) {
         setMessages([{
@@ -46,6 +54,12 @@ const FloatingChatBubble = () => {
     });
 
     newSocket.on('disconnect', () => {
+      console.log('❌ Disconnected from backend');
+      setIsConnected(false);
+    });
+
+    newSocket.on('connect_error', (error) => {
+      console.error('🔥 Connection error:', error);
       setIsConnected(false);
     });
 
@@ -87,7 +101,14 @@ const FloatingChatBubble = () => {
       setIsLoading(false);
     });
 
-    return () => newSocket.close();
+    newSocket.on('error', (error) => {
+      console.error('Socket error:', error);
+      setIsLoading(false);
+    });
+
+    return () => {
+      newSocket.close();
+    };
   }, []);
 
   // Perfect auto-scroll
@@ -157,6 +178,15 @@ const FloatingChatBubble = () => {
     setMessages(prev => [...prev, userMessage]);
     setInputMessage('');
     setIsLoading(true);
+
+    // Add a placeholder AI message for streaming
+    setMessages(prev => [...prev, {
+      id: Date.now() + 1,
+      type: 'ai',
+      text: '...',
+      isStreaming: true,
+      timestamp: new Date()
+    }]);
 
     socket.emit('send_message', { message: inputMessage });
 
@@ -299,6 +329,11 @@ const FloatingChatBubble = () => {
                 </div>
                 <div style={{ fontSize: '12px', opacity: 0.9 }}>
                   {isConnected ? '🟢 متصل' : '🔴 غير متصل'}
+                  {!isConnected && (
+                    <div style={{ fontSize: '10px', marginTop: '2px' }}>
+                      {BACKEND_URL}
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -521,6 +556,22 @@ const FloatingChatBubble = () => {
                   أسأل عن أي استفسار طبي وسأجيبك فوراً
                 </p>
                 
+                {/* Connection Status */}
+                {!isConnected && (
+                  <div style={{
+                    background: '#ffebee',
+                    color: '#c62828',
+                    padding: '10px 14px',
+                    borderRadius: '10px',
+                    marginBottom: '20px',
+                    fontSize: '12px',
+                    fontWeight: '600',
+                    border: '1px solid #ffcdd2'
+                  }}>
+                    🔴 غير متصل بالخادم
+                  </div>
+                )}
+
                 {/* Emergency Banner */}
                 <div style={{
                   background: `linear-gradient(135deg, ${colors.secondary}, #2E7D32)`,
@@ -540,24 +591,30 @@ const FloatingChatBubble = () => {
                     <button
                       key={index}
                       onClick={() => handleQuickAction(action.prompt)}
+                      disabled={!isConnected}
                       style={{
                         background: colors.white,
                         border: `1px solid ${colors.lightBlue}`,
                         borderRadius: '12px',
                         padding: '14px 6px',
-                        cursor: 'pointer',
+                        cursor: isConnected ? 'pointer' : 'not-allowed',
                         fontSize: '11px',
                         fontWeight: '600',
                         transition: 'all 0.2s',
-                        color: colors.primary
+                        color: isConnected ? colors.primary : colors.gray,
+                        opacity: isConnected ? 1 : 0.6
                       }}
                       onMouseEnter={(e) => {
-                        e.target.style.background = colors.primary;
-                        e.target.style.color = colors.white;
+                        if (isConnected) {
+                          e.target.style.background = colors.primary;
+                          e.target.style.color = colors.white;
+                        }
                       }}
                       onMouseLeave={(e) => {
-                        e.target.style.background = colors.white;
-                        e.target.style.color = colors.primary;
+                        if (isConnected) {
+                          e.target.style.background = colors.white;
+                          e.target.style.color = colors.primary;
+                        }
                       }}
                     >
                       <div style={{ fontSize: '18px', marginBottom: '4px' }}>
@@ -694,25 +751,30 @@ const FloatingChatBubble = () => {
                 value={inputMessage}
                 onChange={(e) => setInputMessage(e.target.value)}
                 onKeyPress={handleKeyPress}
-                placeholder="اكتب استفسارك الطبي هنا..."
+                placeholder={isConnected ? "اكتب استفسارك الطبي هنا..." : "جارٍ الاتصال بالخادم..."}
                 disabled={isLoading || !isConnected}
                 style={{
                   flex: 1,
                   padding: '12px 14px',
-                  border: `1px solid ${colors.lightBlue}`,
+                  border: `1px solid ${isConnected ? colors.lightBlue : '#ffcdd2'}`,
                   borderRadius: '10px',
                   outline: 'none',
                   fontSize: '13px',
-                  background: colors.lightBlue,
-                  transition: 'all 0.2s'
+                  background: isConnected ? colors.lightBlue : '#ffebee',
+                  transition: 'all 0.2s',
+                  color: isConnected ? colors.darkGray : '#c62828'
                 }}
                 onFocus={(e) => {
-                  e.target.style.background = colors.white;
-                  e.target.style.borderColor = colors.primary;
+                  if (isConnected) {
+                    e.target.style.background = colors.white;
+                    e.target.style.borderColor = colors.primary;
+                  }
                 }}
                 onBlur={(e) => {
-                  e.target.style.background = colors.lightBlue;
-                  e.target.style.borderColor = colors.lightBlue;
+                  if (isConnected) {
+                    e.target.style.background = colors.lightBlue;
+                    e.target.style.borderColor = colors.lightBlue;
+                  }
                 }}
               />
               <button
@@ -721,16 +783,16 @@ const FloatingChatBubble = () => {
                 style={{
                   width: '44px',
                   height: '44px',
-                  background: colors.secondary,
+                  background: isConnected ? colors.secondary : '#bdbdbd',
                   color: colors.white,
                   border: 'none',
                   borderRadius: '10px',
-                  cursor: inputMessage.trim() ? 'pointer' : 'not-allowed',
+                  cursor: (inputMessage.trim() && isConnected) ? 'pointer' : 'not-allowed',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   transition: 'all 0.2s',
-                  opacity: inputMessage.trim() ? 1 : 0.6
+                  opacity: (inputMessage.trim() && isConnected) ? 1 : 0.6
                 }}
               >
                 <Send size={16} />
@@ -790,6 +852,18 @@ const FloatingChatBubble = () => {
               height: '10px',
               borderRadius: '50%',
               background: '#4CAF50',
+              border: `2px solid ${colors.white}`
+            }} />
+          )}
+          {!isConnected && (
+            <div style={{
+              position: 'absolute',
+              top: '6px',
+              right: '6px',
+              width: '10px',
+              height: '10px',
+              borderRadius: '50%',
+              background: '#f44336',
               border: `2px solid ${colors.white}`
             }} />
           )}
