@@ -7,7 +7,7 @@ function App() {
 
   useEffect(() => {
     // Fetch from Render backend using env variable
-    axios.get(`${import.meta.env.VITE_API_URL}/api`)
+    axios.get('https://ai-chatbot-backend-ouvg.onrender.com/api')
   .then(res => console.log(res.data))
   .catch(err => console.log(err));
   }, []);
@@ -80,4 +80,5 @@ function App() {
 }
 
 export default App;
+
 
