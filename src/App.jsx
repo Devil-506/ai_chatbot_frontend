@@ -8,8 +8,8 @@ function App() {
   useEffect(() => {
     // Fetch from Render backend using env variable
     axios.get(`${import.meta.env.VITE_API_URL}/api`)
-      .then(res => setBackendMessage(res.data.message))
-      .catch(err => setBackendMessage('خطأ في الاتصال بالخادم: ' + err.message));
+  .then(res => console.log(res.data))
+  .catch(err => console.log(err));
   }, []);
 
   return (
@@ -80,3 +80,4 @@ function App() {
 }
 
 export default App;
+
