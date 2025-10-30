@@ -68,7 +68,7 @@ function App() {
             يمكنك سحب الشات وتحريكه في أي مكان على الشاشة
           </p>
           <p style={{ marginTop: '10px', fontWeight: 'bold' }}>
-            رسالة من الخادم: {backendMessage}
+            Prototype: {backendMessage}
           </p>
         </div>
       </div>
@@ -80,6 +80,7 @@ function App() {
 }
 
 export default App;
+
 
 
 
