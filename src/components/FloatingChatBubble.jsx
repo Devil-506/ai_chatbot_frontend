@@ -785,4 +785,37 @@ const FloatingChatBubble = () => {
               position: 'absolute',
               top: '6px',
               right: '6px',
-              width: '10px
+              width: '10px',
+              height: '10px',
+              borderRadius: '50%',
+              background: '#4CAF50',
+              border: `2px solid ${colors.white}`
+            }} />
+          )}
+          {messages.length > 1 && (
+            <div style={{
+              position: 'absolute',
+              top: '4px',
+              left: '4px',
+              width: '18px',
+              height: '18px',
+              borderRadius: '50%',
+              background: '#FF9800',
+              color: 'white',
+              fontSize: '9px',
+              fontWeight: 'bold',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              border: `2px solid ${colors.white}`
+            }}>
+              {messages.filter(m => m.type === 'user').length}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default FloatingChatBubble;
