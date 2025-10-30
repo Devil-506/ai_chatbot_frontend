@@ -550,7 +550,7 @@ const FloatingChatBubble = () => {
                   🩺
                 </div>
                 <h3 style={{ fontWeight: '600', marginBottom: '6px', color: colors.primary }}>
-                  المساعد الطبي الذكي
+                Ghayth_connect
                 </h3>
                 <p style={{ fontSize: '13px', marginBottom: '24px', lineHeight: '1.4' }}>
                   أسأل عن أي استفسار طبي وسأجيبك فوراً
@@ -894,3 +894,4 @@ const FloatingChatBubble = () => {
 };
 
 export default FloatingChatBubble;
+
