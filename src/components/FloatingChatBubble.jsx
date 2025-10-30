@@ -1,4 +1,3 @@
-// FloatingChatBubble.jsx - UPDATED FOR DEPLOYED BACKEND
 import React, { useState, useRef, useEffect } from 'react';
 import { Send, X, Plus, Trash2, Download, Menu, ThumbsUp, ThumbsDown } from 'lucide-react';
 import io from 'socket.io-client';
@@ -20,46 +19,32 @@ const FloatingChatBubble = () => {
   const widgetRef = useRef(null);
   const inputRef = useRef(null);
 
-  // Backend URL - UPDATE THIS TO YOUR ACTUAL BACKEND URL
-  const BACKEND_URL = 'https://ai-chatbot-backend-ouvg.onrender.com';
-
-  // Medical quick actions
+  // Medical quick actions in French
   const quickActions = [
-    { emoji: '🤒', text: 'أعراض البرد', prompt: 'لدي أعراض البرد والإنفلونزا، ما النصائح؟' },
-    { emoji: '💊', text: 'استشارة دوائية', prompt: 'أريد استشارة حول الأدوية المناسبة' },
-    { emoji: '🩺', text: 'فحوصات طبية', prompt: 'ما الفحوصات الطبية الروتينية المطلوبة؟' },
-    { emoji: '❤️', text: 'نصائح وقائية', prompt: 'ما هي النصائح للوقاية من الأمراض؟' }
+    { emoji: '🤖', text: 'Consultation intelligente', prompt: 'J\'ai besoin d\'une consultation médicale intelligente concernant mon état de santé' },
+    { emoji: '💊', text: 'Conseils pharmaceutiques', prompt: 'Je veux des conseils sur les médicaments appropriés et les dosages' },
+    { emoji: '🩺', text: 'Analyse des symptômes', prompt: 'J\'ai ces symptômes, pouvez-vous les analyser et me donner des conseils ?' },
+    { emoji: '❤️', text: 'Conseils préventifs', prompt: 'Quels sont les conseils intelligents pour prévenir les maladies ?' }
   ];
 
-  // Connect to deployed backend
+  // Connect to backend
   useEffect(() => {
-    const newSocket = io(BACKEND_URL, {
-      transports: ['websocket', 'polling'],
-      timeout: 10000
-    });
-    
+    const newSocket = io('https://ai-chatbot-backend-ouvg.onrender.com');
     setSocket(newSocket);
 
     newSocket.on('connect', () => {
-      console.log('✅ Connected to backend:', BACKEND_URL);
       setIsConnected(true);
       if (messages.length === 0) {
         setMessages([{
           id: Date.now(),
           type: 'ai',
-          text: '🩺 **مرحباً! أنا مساعدك الطبي الذكي.**\n\nكيف يمكنني مساعدتك اليوم؟',
+          text: '🤖 **Bonjour ! Je suis votre assistant médical intelligent.**\n\nJe suis ici pour vous aider dans vos questions médicales. Comment puis-je vous servir aujourd\'hui ?',
           timestamp: new Date()
         }]);
       }
     });
 
     newSocket.on('disconnect', () => {
-      console.log('❌ Disconnected from backend');
-      setIsConnected(false);
-    });
-
-    newSocket.on('connect_error', (error) => {
-      console.error('🔥 Connection error:', error);
       setIsConnected(false);
     });
 
@@ -101,14 +86,7 @@ const FloatingChatBubble = () => {
       setIsLoading(false);
     });
 
-    newSocket.on('error', (error) => {
-      console.error('Socket error:', error);
-      setIsLoading(false);
-    });
-
-    return () => {
-      newSocket.close();
-    };
+    return () => newSocket.close();
   }, []);
 
   // Perfect auto-scroll
@@ -179,15 +157,6 @@ const FloatingChatBubble = () => {
     setInputMessage('');
     setIsLoading(true);
 
-    // Add a placeholder AI message for streaming
-    setMessages(prev => [...prev, {
-      id: Date.now() + 1,
-      type: 'ai',
-      text: '...',
-      isStreaming: true,
-      timestamp: new Date()
-    }]);
-
     socket.emit('send_message', { message: inputMessage });
 
     setTimeout(() => inputRef.current?.focus(), 100);
@@ -217,7 +186,7 @@ const FloatingChatBubble = () => {
     setMessages([{
       id: Date.now(),
       type: 'ai',
-      text: '🩺 **محادثة جديدة**\n\nمرحباً! كيف يمكنني مساعدتك اليوم؟',
+      text: '🤖 **Nouvelle Conversation**\n\nBonjour ! Je suis l\'assistant médical intelligent. Comment puis-je vous aider aujourd\'hui ?',
       timestamp: new Date()
     }]);
     setShowClearConfirm(false);
@@ -238,14 +207,14 @@ const FloatingChatBubble = () => {
 
   const exportChat = () => {
     const chatText = messages.map(msg => 
-      `${msg.type === 'user' ? '👤 أنت' : '🩺 المساعد'}: ${msg.text}`
+      `${msg.type === 'user' ? '👤 Vous' : '🤖 Assistant'}: ${msg.text}`
     ).join('\n\n');
     
     const blob = new Blob([chatText], { type: 'text/plain' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `محادثة-طبية-${new Date().toLocaleDateString()}.txt`;
+    a.download = `conversation-medicale-${new Date().toLocaleDateString()}.txt`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -258,10 +227,10 @@ const FloatingChatBubble = () => {
     ));
   };
 
-  // Perfect medical color scheme
+  // Medical AI color scheme (purple theme from the image)
   const colors = {
-    primary: '#1E88E5',    // Professional blue
-    secondary: '#43A047',  // Medical green
+    primary: '#667eea',    // Purple from the image
+    secondary: '#764ba2',  // Dark purple from gradient
     lightBlue: '#E3F2FD',
     lightGreen: '#E8F5E8',
     white: '#FFFFFF',
@@ -282,7 +251,7 @@ const FloatingChatBubble = () => {
       }}
     >
       {isOpen ? (
-        /* PERFECTLY REGULAR Chat Window */
+        /* Chat Window */
         <div style={{
           width: '350px',
           height: '500px',
@@ -295,7 +264,7 @@ const FloatingChatBubble = () => {
           border: `1px solid ${colors.lightBlue}`,
           fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
         }}>
-          {/* Header - Perfectly Draggable */}
+          {/* Header - Draggable */}
           <div 
             style={{
               background: `linear-gradient(135deg, ${colors.primary}, ${colors.secondary})`,
@@ -321,19 +290,14 @@ const FloatingChatBubble = () => {
                 justifyContent: 'center',
                 fontSize: '18px'
               }}>
-                🩺
+                🤖
               </div>
               <div>
                 <div style={{ fontWeight: '600', fontSize: '15px' }}>
-                  Ghayth_connect
+                  Assistant Médical Intelligent
                 </div>
                 <div style={{ fontSize: '12px', opacity: 0.9 }}>
-                  {isConnected ? '🟢 متصل' : '🔴 غير متصل'}
-                  {!isConnected && (
-                    <div style={{ fontSize: '10px', marginTop: '2px' }}>
-                      {BACKEND_URL}
-                    </div>
-                  )}
+                  {isConnected ? '🟢 Connecté' : '🔴 Déconnecté'}
                 </div>
               </div>
             </div>
@@ -354,7 +318,7 @@ const FloatingChatBubble = () => {
                   justifyContent: 'center',
                   transition: 'all 0.2s'
                 }}
-                title="محادثة جديدة"
+                title="Nouvelle conversation"
               >
                 <Plus size={16} />
               </button>
@@ -411,7 +375,7 @@ const FloatingChatBubble = () => {
               border: '1px solid rgba(0,0,0,0.1)',
               zIndex: 1000,
               padding: '6px',
-              minWidth: '140px'
+              minWidth: '160px'
             }}>
               <button
                 onClick={exportChat}
@@ -432,7 +396,7 @@ const FloatingChatBubble = () => {
                 onMouseEnter={(e) => e.target.style.background = colors.lightBlue}
               >
                 <Download size={14} />
-                تصدير المحادثة
+                Exporter la conversation
               </button>
               
               <button
@@ -454,7 +418,7 @@ const FloatingChatBubble = () => {
                 onMouseEnter={(e) => e.target.style.background = colors.lightBlue}
               >
                 <Trash2 size={14} />
-                مسح المحادثة
+                Effacer la conversation
               </button>
             </div>
           )}
@@ -476,10 +440,10 @@ const FloatingChatBubble = () => {
               width: '280px'
             }}>
               <div style={{ fontSize: '16px', fontWeight: '600', marginBottom: '10px', color: colors.darkGray }}>
-                🗑️ مسح المحادثة
+                🗑️ Effacer la conversation
               </div>
               <div style={{ fontSize: '13px', color: colors.gray, marginBottom: '16px' }}>
-                هل أنت متأكد من أنك تريد مسح هذه المحادثة؟
+                Êtes-vous sûr de vouloir effacer cette conversation ?
               </div>
               <div style={{ display: 'flex', gap: '10px', justifyContent: 'center' }}>
                 <button
@@ -495,7 +459,7 @@ const FloatingChatBubble = () => {
                     color: colors.primary
                   }}
                 >
-                  إلغاء
+                  Annuler
                 </button>
                 <button
                   onClick={confirmClear}
@@ -510,13 +474,13 @@ const FloatingChatBubble = () => {
                     color: colors.white
                   }}
                 >
-                  نعم، مسح
+                  Oui, effacer
                 </button>
               </div>
             </div>
           )}
 
-          {/* Messages Area - Perfectly Adaptive */}
+          {/* Messages Area */}
           <div style={{
             flex: 1,
             overflowY: 'auto',
@@ -547,31 +511,15 @@ const FloatingChatBubble = () => {
                   fontSize: '28px',
                   color: colors.white
                 }}>
-                  🩺
+                  🤖
                 </div>
                 <h3 style={{ fontWeight: '600', marginBottom: '6px', color: colors.primary }}>
-                Ghayth_connect
+                  Assistant Médical Intelligent
                 </h3>
                 <p style={{ fontSize: '13px', marginBottom: '24px', lineHeight: '1.4' }}>
-                  أسأل عن أي استفسار طبي وسأجيبك فوراً
+                  Posez n'importe quelle question médicale et je vous répondrai instantanément avec l'intelligence artificielle
                 </p>
                 
-                {/* Connection Status */}
-                {!isConnected && (
-                  <div style={{
-                    background: '#ffebee',
-                    color: '#c62828',
-                    padding: '10px 14px',
-                    borderRadius: '10px',
-                    marginBottom: '20px',
-                    fontSize: '12px',
-                    fontWeight: '600',
-                    border: '1px solid #ffcdd2'
-                  }}>
-                    🔴 غير متصل بالخادم
-                  </div>
-                )}
-
                 {/* Emergency Banner */}
                 <div style={{
                   background: `linear-gradient(135deg, ${colors.secondary}, #2E7D32)`,
@@ -582,7 +530,7 @@ const FloatingChatBubble = () => {
                   fontSize: '12px',
                   fontWeight: '600'
                 }}>
-                  🚨 للطوارئ: اتصل بالرقم 190
+                  🚨 Urgence : Appelez le 190
                 </div>
 
                 {/* Quick Actions */}
@@ -591,30 +539,24 @@ const FloatingChatBubble = () => {
                     <button
                       key={index}
                       onClick={() => handleQuickAction(action.prompt)}
-                      disabled={!isConnected}
                       style={{
                         background: colors.white,
                         border: `1px solid ${colors.lightBlue}`,
                         borderRadius: '12px',
                         padding: '14px 6px',
-                        cursor: isConnected ? 'pointer' : 'not-allowed',
+                        cursor: 'pointer',
                         fontSize: '11px',
                         fontWeight: '600',
                         transition: 'all 0.2s',
-                        color: isConnected ? colors.primary : colors.gray,
-                        opacity: isConnected ? 1 : 0.6
+                        color: colors.primary
                       }}
                       onMouseEnter={(e) => {
-                        if (isConnected) {
-                          e.target.style.background = colors.primary;
-                          e.target.style.color = colors.white;
-                        }
+                        e.target.style.background = colors.primary;
+                        e.target.style.color = colors.white;
                       }}
                       onMouseLeave={(e) => {
-                        if (isConnected) {
-                          e.target.style.background = colors.white;
-                          e.target.style.color = colors.primary;
-                        }
+                        e.target.style.background = colors.white;
+                        e.target.style.color = colors.primary;
                       }}
                     >
                       <div style={{ fontSize: '18px', marginBottom: '4px' }}>
@@ -737,7 +679,7 @@ const FloatingChatBubble = () => {
             )}
           </div>
 
-          {/* Input Area - Perfectly Fitted */}
+          {/* Input Area */}
           <div style={{
             padding: '16px',
             borderTop: `1px solid ${colors.lightBlue}`,
@@ -751,30 +693,25 @@ const FloatingChatBubble = () => {
                 value={inputMessage}
                 onChange={(e) => setInputMessage(e.target.value)}
                 onKeyPress={handleKeyPress}
-                placeholder={isConnected ? "اكتب استفسارك الطبي هنا..." : "جارٍ الاتصال بالخادم..."}
+                placeholder="Tapez votre question médicale ici..."
                 disabled={isLoading || !isConnected}
                 style={{
                   flex: 1,
                   padding: '12px 14px',
-                  border: `1px solid ${isConnected ? colors.lightBlue : '#ffcdd2'}`,
+                  border: `1px solid ${colors.lightBlue}`,
                   borderRadius: '10px',
                   outline: 'none',
                   fontSize: '13px',
-                  background: isConnected ? colors.lightBlue : '#ffebee',
-                  transition: 'all 0.2s',
-                  color: isConnected ? colors.darkGray : '#c62828'
+                  background: colors.lightBlue,
+                  transition: 'all 0.2s'
                 }}
                 onFocus={(e) => {
-                  if (isConnected) {
-                    e.target.style.background = colors.white;
-                    e.target.style.borderColor = colors.primary;
-                  }
+                  e.target.style.background = colors.white;
+                  e.target.style.borderColor = colors.primary;
                 }}
                 onBlur={(e) => {
-                  if (isConnected) {
-                    e.target.style.background = colors.lightBlue;
-                    e.target.style.borderColor = colors.lightBlue;
-                  }
+                  e.target.style.background = colors.lightBlue;
+                  e.target.style.borderColor = colors.lightBlue;
                 }}
               />
               <button
@@ -783,16 +720,16 @@ const FloatingChatBubble = () => {
                 style={{
                   width: '44px',
                   height: '44px',
-                  background: isConnected ? colors.secondary : '#bdbdbd',
+                  background: colors.secondary,
                   color: colors.white,
                   border: 'none',
                   borderRadius: '10px',
-                  cursor: (inputMessage.trim() && isConnected) ? 'pointer' : 'not-allowed',
+                  cursor: inputMessage.trim() ? 'pointer' : 'not-allowed',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   transition: 'all 0.2s',
-                  opacity: (inputMessage.trim() && isConnected) ? 1 : 0.6
+                  opacity: inputMessage.trim() ? 1 : 0.6
                 }}
               >
                 <Send size={16} />
@@ -800,7 +737,7 @@ const FloatingChatBubble = () => {
             </div>
             <div style={{ textAlign: 'center', marginTop: '10px' }}>
               <span style={{ fontSize: '10px', color: colors.gray }}>
-                ⚕️ هذا المساعد لا يغني عن استشارة الطبيب المتخصص
+                ⚕️ Cet assistant ne remplace pas une consultation avec un médecin spécialisé
               </span>
             </div>
           </div>
@@ -821,7 +758,7 @@ const FloatingChatBubble = () => {
           </style>
         </div>
       ) : (
-        /* Perfect Floating Button */
+        /* Floating Button with AI Bot Icon */
         <div
           onMouseDown={handleMouseDown}
           onClick={toggleChat}
@@ -835,64 +772,17 @@ const FloatingChatBubble = () => {
             alignItems: 'center',
             justifyContent: 'center',
             cursor: 'pointer',
-            boxShadow: '0 10px 25px rgba(30, 136, 229, 0.3)',
+            boxShadow: '0 10px 25px rgba(102, 126, 234, 0.3)',
             border: `2px solid ${colors.white}`,
             fontSize: '24px',
             transition: 'all 0.3s ease',
             userSelect: 'none'
           }}
         >
-          💬
+          🤖
           {isConnected && (
             <div style={{
               position: 'absolute',
               top: '6px',
               right: '6px',
-              width: '10px',
-              height: '10px',
-              borderRadius: '50%',
-              background: '#4CAF50',
-              border: `2px solid ${colors.white}`
-            }} />
-          )}
-          {!isConnected && (
-            <div style={{
-              position: 'absolute',
-              top: '6px',
-              right: '6px',
-              width: '10px',
-              height: '10px',
-              borderRadius: '50%',
-              background: '#f44336',
-              border: `2px solid ${colors.white}`
-            }} />
-          )}
-          {messages.length > 1 && (
-            <div style={{
-              position: 'absolute',
-              top: '4px',
-              left: '4px',
-              width: '18px',
-              height: '18px',
-              borderRadius: '50%',
-              background: '#FF9800',
-              color: 'white',
-              fontSize: '9px',
-              fontWeight: 'bold',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              border: `2px solid ${colors.white}`
-            }}>
-              {messages.filter(m => m.type === 'user').length}
-            </div>
-          )}
-        </div>
-      )}
-    </div>
-  );
-};
-
-export default FloatingChatBubble;
-
-
+              width: '10px
