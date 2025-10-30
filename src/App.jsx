@@ -22,8 +22,8 @@ function App() {
     }}>
       {/* Your Existing Website Content */}
       <div style={{ textAlign: 'center', marginBottom: '40px' }}>
-        <h1 style={{ fontSize: '3rem', marginBottom: '10px' }}>🌍 موقعي الرسمي</h1>
-        <p style={{ fontSize: '1.3rem' }}>هذا موقع ويب عادي - الشات يظهر فوق كل شيء!</p>
+        <h1 style={{ fontSize: '3rem', marginBottom: '10px' }}>Ghayth_connect</h1>
+        <p style={{ fontSize: '1.3rem' }}>Connect_care!</p>
       </div>
 
       <div style={{
@@ -34,7 +34,7 @@ function App() {
         margin: '0 auto',
         backdropFilter: 'blur(10px)'
       }}>
-        <h2 style={{ textAlign: 'center', marginBottom: '30px' }}>محتوى موقعك هنا</h2>
+        <h2 style={{ textAlign: 'center', marginBottom: '30px' }}>to modify</h2>
 
         <div style={{
           display: 'grid',
@@ -44,15 +44,15 @@ function App() {
         }}>
           <div style={{ background: 'rgba(255,255,255,0.2)', padding: '20px', borderRadius: '10px' }}>
             <h3>قسم 1</h3>
-            <p>محتوى القسم الأول من موقعك...</p>
+            <p>same</p>
           </div>
           <div style={{ background: 'rgba(255,255,255,0.2)', padding: '20px', borderRadius: '10px' }}>
             <h3>قسم 2</h3>
-            <p>محتوى القسم الثاني من موقعك...</p>
+            <p>same</p>
           </div>
           <div style={{ background: 'rgba(255,255,255,0.2)', padding: '20px', borderRadius: '10px' }}>
             <h3>قسم 3</h3>
-            <p>محتوى القسم الثالث من موقعك...</p>
+            <p>same</p>
           </div>
         </div>
 
@@ -62,7 +62,7 @@ function App() {
           borderRadius: '10px',
           textAlign: 'center'
         }}>
-          <h3>💡 الشات الطبي العائم</h3>
+          <h3>Connect_care aibot_wedget</h3>
           <p>انقر على الزر العائم في الزاوية لفتح المساعد الطبي!</p>
           <p style={{ fontSize: '14px', opacity: 0.8 }}>
             يمكنك سحب الشات وتحريكه في أي مكان على الشاشة
@@ -80,5 +80,6 @@ function App() {
 }
 
 export default App;
+
 
 
