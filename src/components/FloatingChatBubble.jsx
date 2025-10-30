@@ -325,7 +325,7 @@ const FloatingChatBubble = () => {
               </div>
               <div>
                 <div style={{ fontWeight: '600', fontSize: '15px' }}>
-                  المساعد الطبي
+                  Ghayth_connect
                 </div>
                 <div style={{ fontSize: '12px', opacity: 0.9 }}>
                   {isConnected ? '🟢 متصل' : '🔴 غير متصل'}
@@ -894,4 +894,5 @@ const FloatingChatBubble = () => {
 };
 
 export default FloatingChatBubble;
+
 
