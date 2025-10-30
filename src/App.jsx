@@ -3,7 +3,7 @@ import FloatingChatBubble from './components/FloatingChatBubble';
 import axios from 'axios';
 
 function App() {
-  const [backendMessage, setBackendMessage] = useState('جارٍ الاتصال بالخادم...');
+  const [backendMessage, setBackendMessage] = useState('worst designer...');
 
   useEffect(() => {
     // Fetch from Render backend using env variable
@@ -22,7 +22,7 @@ function App() {
     }}>
       {/* Your Existing Website Content */}
       <div style={{ textAlign: 'center', marginBottom: '40px' }}>
-        <h1 style={{ fontSize: '3rem', marginBottom: '10px' }}>Ghayth_connect</h1>
+        <h1 style={{ fontSize: '3rem', marginBottom: '10px' }}>Ghayth_connect💪</h1>
         <p style={{ fontSize: '1.3rem' }}>Connect_care!</p>
       </div>
 
@@ -43,15 +43,15 @@ function App() {
           marginBottom: '40px'
         }}>
           <div style={{ background: 'rgba(255,255,255,0.2)', padding: '20px', borderRadius: '10px' }}>
-            <h3>قسم 1</h3>
+            <h3>random 1</h3>
             <p>same</p>
           </div>
           <div style={{ background: 'rgba(255,255,255,0.2)', padding: '20px', borderRadius: '10px' }}>
-            <h3>قسم 2</h3>
+            <h3>random 2</h3>
             <p>same</p>
           </div>
           <div style={{ background: 'rgba(255,255,255,0.2)', padding: '20px', borderRadius: '10px' }}>
-            <h3>قسم 3</h3>
+            <h3>random 3</h3>
             <p>same</p>
           </div>
         </div>
@@ -80,6 +80,7 @@ function App() {
 }
 
 export default App;
+
 
 
 
