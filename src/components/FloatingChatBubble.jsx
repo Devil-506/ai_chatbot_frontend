@@ -1,4 +1,4 @@
-// FloatingChatBubble.jsx - UPDATED with return-to-corner behavior
+// FloatingChatBubble.jsx - FIXED with proper dragging for closed state
 import React, { useState, useRef, useEffect } from 'react';
 import { Send, X, Plus, Trash2, Download, Menu, ThumbsUp, ThumbsDown, Bot, User, Shield } from 'lucide-react';
 import io from 'socket.io-client';
@@ -6,7 +6,10 @@ import io from 'socket.io-client';
 const FloatingChatBubble = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
-  const [position, setPosition] = useState({ x: window.innerWidth - 100, y: 40 }); // Start in right corner
+  const [position, setPosition] = useState({ 
+    x: typeof window !== 'undefined' ? window.innerWidth - 90 : 100, 
+    y: 20 
+  });
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const [messages, setMessages] = useState([]);
   const [inputMessage, setInputMessage] = useState('');
@@ -42,26 +45,22 @@ const FloatingChatBubble = () => {
     { 
       emoji: '🩺', 
       text: 'Diagnostic IA', 
-      prompt: 'J\'ai besoin d\'une analyse médicale intelligente de mes symptômes',
-      color: 'from-blue-500 to-cyan-500'
+      prompt: 'J\'ai besoin d\'une analyse médicale intelligente de mes symptômes'
     },
     { 
       emoji: '💊', 
       text: 'Médicaments', 
-      prompt: 'Je veux des informations sur les médicaments et leurs effets',
-      color: 'from-purple-500 to-pink-500'
+      prompt: 'Je veux des informations sur les médicaments et leurs effets'
     },
     { 
       emoji: '📋', 
       text: 'Analyse Symptômes', 
-      prompt: 'Pouvez-vous analyser ces symptômes et me conseiller ?',
-      color: 'from-green-500 to-emerald-500'
+      prompt: 'Pouvez-vous analyser ces symptômes et me conseiller ?'
     },
     { 
       emoji: '🛡️', 
       text: 'Prévention', 
-      prompt: 'Quelles sont les mesures préventives pour maintenir une bonne santé ?',
-      color: 'from-orange-500 to-red-500'
+      prompt: 'Quelles sont les mesures préventives pour maintenir une bonne santé ?'
     }
   ];
 
@@ -137,25 +136,24 @@ const FloatingChatBubble = () => {
     }
   }, [messages, isOpen]);
 
-  // Enhanced dragging with return-to-corner behavior
+  // Enhanced dragging for BOTH open and closed states
   const handleMouseDown = (e) => {
-    if (isOpen) {
-      setIsDragging(true);
-      setDragOffset({
-        x: e.clientX - position.x,
-        y: e.clientY - position.y
-      });
-    }
+    e.preventDefault();
+    setIsDragging(true);
+    setDragOffset({
+      x: e.clientX - position.x,
+      y: e.clientY - position.y
+    });
   };
 
   const handleMouseMove = (e) => {
-    if (!isDragging || !isOpen) return;
+    if (!isDragging) return;
     
     const newX = e.clientX - dragOffset.x;
     const newY = e.clientY - dragOffset.y;
     
-    const widgetWidth = 400;
-    const widgetHeight = isMinimized ? 80 : 600;
+    const widgetWidth = isOpen ? 400 : 70;
+    const widgetHeight = isOpen ? (isMinimized ? 80 : 600) : 70;
     
     const boundedX = Math.max(10, Math.min(newX, window.innerWidth - widgetWidth - 10));
     const boundedY = Math.max(10, Math.min(newY, window.innerHeight - widgetHeight - 10));
@@ -168,41 +166,43 @@ const FloatingChatBubble = () => {
     
     setIsDragging(false);
     
-    // Return to corner behavior
-    const widgetWidth = isOpen ? 400 : 70;
-    const threshold = 100; // Distance from edge to trigger return
-    
-    // Check if close to right edge
-    if (position.x > window.innerWidth - widgetWidth - threshold) {
-      setPosition({
-        x: window.innerWidth - widgetWidth - 20,
-        y: position.y
-      });
-    }
-    // Check if close to left edge
-    else if (position.x < threshold) {
-      setPosition({
-        x: 20,
-        y: position.y
-      });
-    }
-    // If in middle, check which edge is closer
-    else {
-      const distanceToRight = window.innerWidth - position.x - widgetWidth;
-      const distanceToLeft = position.x;
+    // Return to corner behavior only for closed state
+    if (!isOpen) {
+      const threshold = 100;
+      const widgetWidth = 70;
       
-      if (distanceToRight < distanceToLeft) {
-        // Closer to right edge
+      // Check if close to right edge
+      if (position.x > window.innerWidth - widgetWidth - threshold) {
         setPosition({
           x: window.innerWidth - widgetWidth - 20,
           y: position.y
         });
-      } else {
-        // Closer to left edge
+      }
+      // Check if close to left edge
+      else if (position.x < threshold) {
         setPosition({
           x: 20,
           y: position.y
         });
+      }
+      // If in middle, check which edge is closer
+      else {
+        const distanceToRight = window.innerWidth - position.x - widgetWidth;
+        const distanceToLeft = position.x;
+        
+        if (distanceToRight < distanceToLeft) {
+          // Closer to right edge
+          setPosition({
+            x: window.innerWidth - widgetWidth - 20,
+            y: position.y
+          });
+        } else {
+          // Closer to left edge
+          setPosition({
+            x: 20,
+            y: position.y
+          });
+        }
       }
     }
   };
@@ -212,12 +212,14 @@ const FloatingChatBubble = () => {
       document.addEventListener('mousemove', handleMouseMove);
       document.addEventListener('mouseup', handleMouseUp);
       document.body.style.cursor = 'grabbing';
+      document.body.style.userSelect = 'none';
     }
 
     return () => {
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
       document.body.style.cursor = '';
+      document.body.style.userSelect = '';
     };
   }, [isDragging]);
 
@@ -255,6 +257,7 @@ const FloatingChatBubble = () => {
     const wasOpen = isOpen;
     setIsOpen(!isOpen);
     setShowMenu(false);
+    setIsMinimized(false);
     
     if (!wasOpen && !isOpen) {
       // Opening the chat - ensure it's in the right corner
@@ -369,7 +372,7 @@ const FloatingChatBubble = () => {
           backdropFilter: 'blur(20px)',
           opacity: isMinimized ? 0.9 : 1
         }}>
-          {/* Enhanced Header */}
+          {/* Enhanced Header - Draggable */}
           <div 
             style={{
               background: `linear-gradient(135deg, ${colors.primary}, ${colors.primaryLight})`,
@@ -478,6 +481,7 @@ const FloatingChatBubble = () => {
             </div>
           </div>
 
+          {/* Rest of the chat window remains the same... */}
           {/* Enhanced Dropdown Menu */}
           {showMenu && (
             <div style={{
@@ -908,7 +912,7 @@ const FloatingChatBubble = () => {
           )}
         </div>
       ) : (
-        /* Enhanced Floating Button - Always returns to right corner */
+        /* Enhanced Floating Button - NOW DRAGGABLE! */
         <div
           onMouseDown={handleMouseDown}
           onClick={toggleChat}
@@ -921,13 +925,14 @@ const FloatingChatBubble = () => {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            cursor: 'pointer',
+            cursor: isDragging ? 'grabbing' : 'pointer',
             boxShadow: `0 20px 40px rgba(99, 102, 241, 0.4)`,
             border: `2px solid rgba(255,255,255,0.2)`,
             fontSize: '28px',
-            transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+            transition: isDragging ? 'none' : 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
             userSelect: 'none',
-            position: 'relative'
+            position: 'relative',
+            transform: isDragging ? 'scale(1.05) rotate(5deg)' : 'scale(1) rotate(0deg)'
           }}
         >
           <Bot size={28} />
