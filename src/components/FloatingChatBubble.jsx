@@ -1,4 +1,4 @@
-// FloatingChatBubble.jsx - FIXED with proper dragging for closed state
+// FloatingChatBubble.jsx - FIXED with both icon and conversation returning to top right
 import React, { useState, useRef, useEffect } from 'react';
 import { Send, X, Plus, Trash2, Download, Menu, ThumbsUp, ThumbsDown, Bot, User, Shield } from 'lucide-react';
 import io from 'socket.io-client';
@@ -166,45 +166,14 @@ const FloatingChatBubble = () => {
     
     setIsDragging(false);
     
-    // Return to corner behavior only for closed state
-    if (!isOpen) {
-      const threshold = 100;
-      const widgetWidth = 70;
-      
-      // Check if close to right edge
-      if (position.x > window.innerWidth - widgetWidth - threshold) {
-        setPosition({
-          x: window.innerWidth - widgetWidth - 20,
-          y: position.y
-        });
-      }
-      // Check if close to left edge
-      else if (position.x < threshold) {
-        setPosition({
-          x: 20,
-          y: position.y
-        });
-      }
-      // If in middle, check which edge is closer
-      else {
-        const distanceToRight = window.innerWidth - position.x - widgetWidth;
-        const distanceToLeft = position.x;
-        
-        if (distanceToRight < distanceToLeft) {
-          // Closer to right edge
-          setPosition({
-            x: window.innerWidth - widgetWidth - 20,
-            y: position.y
-          });
-        } else {
-          // Closer to left edge
-          setPosition({
-            x: 20,
-            y: position.y
-          });
-        }
-      }
-    }
+    // ALWAYS return to top right corner for BOTH states
+    const widgetWidth = isOpen ? 400 : 70;
+    const widgetHeight = isOpen ? (isMinimized ? 80 : 600) : 70;
+    
+    setPosition({
+      x: window.innerWidth - widgetWidth - 20,
+      y: 20 // Always top position
+    });
   };
 
   useEffect(() => {
@@ -259,24 +228,25 @@ const FloatingChatBubble = () => {
     setShowMenu(false);
     setIsMinimized(false);
     
-    if (!wasOpen && !isOpen) {
-      // Opening the chat - ensure it's in the right corner
-      setPosition({
-        x: window.innerWidth - 400 - 20,
-        y: Math.min(position.y, window.innerHeight - 600 - 20)
-      });
+    // Always position in top right corner when toggling
+    const widgetWidth = !wasOpen ? 400 : 70;
+    setPosition({
+      x: window.innerWidth - widgetWidth - 20,
+      y: 20
+    });
+    
+    if (!wasOpen) {
       setTimeout(() => inputRef.current?.focus(), 300);
-    } else if (wasOpen && !isOpen) {
-      // Closing the chat - return bubble to right corner
-      setPosition({
-        x: window.innerWidth - 70 - 20,
-        y: position.y
-      });
     }
   };
 
   const toggleMinimize = () => {
     setIsMinimized(!isMinimized);
+    // Maintain top right position when minimizing
+    setPosition({
+      x: window.innerWidth - 400 - 20,
+      y: 20
+    });
   };
 
   const startNewChat = () => {
@@ -324,25 +294,19 @@ const FloatingChatBubble = () => {
     ));
   };
 
-  // Handle window resize to keep bubble in right corner
+  // Handle window resize to keep bubble in top right corner
   useEffect(() => {
     const handleResize = () => {
-      if (!isOpen) {
-        setPosition({
-          x: window.innerWidth - 70 - 20,
-          y: position.y
-        });
-      } else {
-        setPosition({
-          x: window.innerWidth - 400 - 20,
-          y: Math.min(position.y, window.innerHeight - 600 - 20)
-        });
-      }
+      const widgetWidth = isOpen ? 400 : 70;
+      setPosition({
+        x: window.innerWidth - widgetWidth - 20,
+        y: 20
+      });
     };
 
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
-  }, [isOpen, position.y]);
+  }, [isOpen]);
 
   return (
     <div
@@ -481,7 +445,6 @@ const FloatingChatBubble = () => {
             </div>
           </div>
 
-          {/* Rest of the chat window remains the same... */}
           {/* Enhanced Dropdown Menu */}
           {showMenu && (
             <div style={{
@@ -912,7 +875,7 @@ const FloatingChatBubble = () => {
           )}
         </div>
       ) : (
-        /* Enhanced Floating Button - NOW DRAGGABLE! */
+        /* Enhanced Floating Button - NOW DRAGGABLE and returns to top right! */
         <div
           onMouseDown={handleMouseDown}
           onClick={toggleChat}
