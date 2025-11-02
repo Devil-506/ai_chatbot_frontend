@@ -1,11 +1,12 @@
+// FloatingChatBubble.jsx - UPDATED
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, X, Plus, Trash2, Download, Menu, ThumbsUp, ThumbsDown } from 'lucide-react';
+import { Send, X, Plus, Trash2, Download, Menu, ThumbsUp, ThumbsDown, Bot, User, Zap, Shield, Clock } from 'lucide-react';
 import io from 'socket.io-client';
 
 const FloatingChatBubble = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
-  const [position, setPosition] = useState({ x: 20, y: 20 });
+  const [position, setPosition] = useState({ x: 40, y: 40 });
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const [messages, setMessages] = useState([]);
   const [inputMessage, setInputMessage] = useState('');
@@ -14,17 +15,54 @@ const FloatingChatBubble = () => {
   const [isConnected, setIsConnected] = useState(false);
   const [showClearConfirm, setShowClearConfirm] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
+  const [isMinimized, setIsMinimized] = useState(false);
   
   const messagesEndRef = useRef(null);
   const widgetRef = useRef(null);
   const inputRef = useRef(null);
 
-  // Medical quick actions in French
+  // Modern color scheme
+  const colors = {
+    primary: '#6366F1',
+    primaryLight: '#8B5CF6',
+    secondary: '#06D6A0',
+    accent: '#F59E0B',
+    background: '#0F172A',
+    surface: '#1E293B',
+    surfaceLight: '#334155',
+    text: '#F8FAFC',
+    textMuted: '#94A3B8',
+    border: '#475569',
+    error: '#EF4444',
+    success: '#10B981'
+  };
+
+  // Enhanced quick actions
   const quickActions = [
-    { emoji: '🤖', text: 'Consultation intelligente', prompt: 'J\'ai besoin d\'une consultation médicale intelligente concernant mon état de santé' },
-    { emoji: '💊', text: 'Conseils pharmaceutiques', prompt: 'Je veux des conseils sur les médicaments appropriés et les dosages' },
-    { emoji: '🩺', text: 'Analyse des symptômes', prompt: 'J\'ai ces symptômes, pouvez-vous les analyser et me donner des conseils ?' },
-    { emoji: '❤️', text: 'Conseils préventifs', prompt: 'Quels sont les conseils intelligents pour prévenir les maladies ?' }
+    { 
+      emoji: '🩺', 
+      text: 'Diagnostic IA', 
+      prompt: 'J\'ai besoin d\'une analyse médicale intelligente de mes symptômes',
+      color: 'from-blue-500 to-cyan-500'
+    },
+    { 
+      emoji: '💊', 
+      text: 'Médicaments', 
+      prompt: 'Je veux des informations sur les médicaments et leurs effets',
+      color: 'from-purple-500 to-pink-500'
+    },
+    { 
+      emoji: '📋', 
+      text: 'Analyse Symptômes', 
+      prompt: 'Pouvez-vous analyser ces symptômes et me conseiller ?',
+      color: 'from-green-500 to-emerald-500'
+    },
+    { 
+      emoji: '🛡️', 
+      text: 'Prévention', 
+      prompt: 'Quelles sont les mesures préventives pour maintenir une bonne santé ?',
+      color: 'from-orange-500 to-red-500'
+    }
   ];
 
   // Connect to backend
@@ -38,7 +76,7 @@ const FloatingChatBubble = () => {
         setMessages([{
           id: Date.now(),
           type: 'ai',
-          text: '🤖 **Bonjour ! Je suis votre assistant médical intelligent.**\n\nJe suis ici pour vous aider dans vos questions médicales. Comment puis-je vous servir aujourd\'hui ?',
+          text: '**🩺 Bonjour ! Je suis votre assistant médical IA.**\n\nJe suis ici pour vous accompagner dans vos questions de santé. Parlez-moi de vos symptômes, demandez des informations médicales, ou utilisez les actions rapides ci-dessous.',
           timestamp: new Date()
         }]);
       }
@@ -91,32 +129,33 @@ const FloatingChatBubble = () => {
 
   // Perfect auto-scroll
   useEffect(() => {
-    if (messagesEndRef.current) {
+    if (messagesEndRef.current && isOpen) {
       messagesEndRef.current.scrollIntoView({ 
         behavior: "smooth",
         block: "end"
       });
     }
-  }, [messages]);
+  }, [messages, isOpen]);
 
-  // Enhanced dragging with perfect boundaries
+  // Enhanced dragging
   const handleMouseDown = (e) => {
-    setIsDragging(true);
-    setDragOffset({
-      x: e.clientX - position.x,
-      y: e.clientY - position.y
-    });
+    if (isOpen) {
+      setIsDragging(true);
+      setDragOffset({
+        x: e.clientX - position.x,
+        y: e.clientY - position.y
+      });
+    }
   };
 
   const handleMouseMove = (e) => {
-    if (!isDragging) return;
+    if (!isDragging || !isOpen) return;
     
     const newX = e.clientX - dragOffset.x;
     const newY = e.clientY - dragOffset.y;
     
-    // Perfect boundaries calculation
-    const widgetWidth = isOpen ? 350 : 60;
-    const widgetHeight = isOpen ? 500 : 60;
+    const widgetWidth = 400;
+    const widgetHeight = isMinimized ? 80 : 600;
     
     const boundedX = Math.max(10, Math.min(newX, window.innerWidth - widgetWidth - 10));
     const boundedY = Math.max(10, Math.min(newY, window.innerHeight - widgetHeight - 10));
@@ -128,7 +167,6 @@ const FloatingChatBubble = () => {
     setIsDragging(false);
   };
 
-  // Event listeners for dragging
   useEffect(() => {
     if (isDragging) {
       document.addEventListener('mousemove', handleMouseMove);
@@ -158,7 +196,6 @@ const FloatingChatBubble = () => {
     setIsLoading(true);
 
     socket.emit('send_message', { message: inputMessage });
-
     setTimeout(() => inputRef.current?.focus(), 100);
   };
 
@@ -177,16 +214,21 @@ const FloatingChatBubble = () => {
   const toggleChat = () => {
     setIsOpen(!isOpen);
     setShowMenu(false);
+    setIsMinimized(false);
     if (!isOpen) {
       setTimeout(() => inputRef.current?.focus(), 300);
     }
+  };
+
+  const toggleMinimize = () => {
+    setIsMinimized(!isMinimized);
   };
 
   const startNewChat = () => {
     setMessages([{
       id: Date.now(),
       type: 'ai',
-      text: '🤖 **Nouvelle Conversation**\n\nBonjour ! Je suis l\'assistant médical intelligent. Comment puis-je vous aider aujourd\'hui ?',
+      text: '**🔄 Nouvelle Conversation**\n\nBonjour ! Je suis votre assistant médical IA. Comment puis-je vous aider aujourd\'hui ?',
       timestamp: new Date()
     }]);
     setShowClearConfirm(false);
@@ -214,7 +256,7 @@ const FloatingChatBubble = () => {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `conversation-medicale-${new Date().toLocaleDateString()}.txt`;
+    a.download = `conversation-medicale-${new Date().toLocaleDateString('fr-FR')}.txt`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -227,17 +269,6 @@ const FloatingChatBubble = () => {
     ));
   };
 
-  // Medical AI color scheme (purple theme from the image)
-  const colors = {
-    primary: '#667eea',    // Purple from the image
-    secondary: '#764ba2',  // Dark purple from gradient
-    lightBlue: '#E3F2FD',
-    lightGreen: '#E8F5E8',
-    white: '#FFFFFF',
-    gray: '#666666',
-    darkGray: '#333333'
-  };
-
   return (
     <div
       ref={widgetRef}
@@ -245,31 +276,33 @@ const FloatingChatBubble = () => {
         position: 'fixed',
         left: `${position.x}px`,
         top: `${position.y}px`,
-        zIndex: 9999,
-        transition: isDragging ? 'none' : 'all 0.3s ease',
-        transform: isDragging ? 'scale(1.02)' : 'scale(1)'
+        zIndex: 10000,
+        transition: isDragging ? 'none' : 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+        transform: isDragging ? 'scale(1.02) rotate(1deg)' : 'scale(1) rotate(0deg)',
+        fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, sans-serif'
       }}
     >
       {isOpen ? (
-        /* Chat Window */
+        /* Enhanced Chat Window */
         <div style={{
-          width: '350px',
-          height: '500px',
-          background: colors.white,
-          borderRadius: '16px',
-          boxShadow: '0 20px 40px rgba(0,0,0,0.15), 0 0 0 1px rgba(0,0,0,0.05)',
+          width: '400px',
+          height: isMinimized ? '80px' : '600px',
+          background: colors.surface,
+          borderRadius: '20px',
+          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255,255,255,0.1)',
           display: 'flex',
           flexDirection: 'column',
           overflow: 'hidden',
-          border: `1px solid ${colors.lightBlue}`,
-          fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+          border: `1px solid ${colors.border}`,
+          backdropFilter: 'blur(20px)',
+          opacity: isMinimized ? 0.9 : 1
         }}>
-          {/* Header - Draggable */}
+          {/* Enhanced Header */}
           <div 
             style={{
-              background: `linear-gradient(135deg, ${colors.primary}, ${colors.secondary})`,
-              color: colors.white,
-              padding: '16px',
+              background: `linear-gradient(135deg, ${colors.primary}, ${colors.primaryLight})`,
+              color: colors.text,
+              padding: '20px',
               display: 'flex',
               justifyContent: 'space-between',
               alignItems: 'center',
@@ -279,64 +312,73 @@ const FloatingChatBubble = () => {
             }}
             onMouseDown={handleMouseDown}
           >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
               <div style={{
-                width: '40px',
-                height: '40px',
-                borderRadius: '10px',
+                width: '44px',
+                height: '44px',
+                borderRadius: '12px',
                 background: 'rgba(255,255,255,0.2)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                fontSize: '18px'
+                fontSize: '20px',
+                backdropFilter: 'blur(10px)'
               }}>
-                🤖
+                <Bot size={20} />
               </div>
               <div>
-                <div style={{ fontWeight: '600', fontSize: '15px' }}>
-                  Assistant Médical Intelligent
+                <div style={{ fontWeight: 700, fontSize: '16px', marginBottom: '2px' }}>
+                  Assistant Médical IA
                 </div>
-                <div style={{ fontSize: '12px', opacity: 0.9 }}>
-                  {isConnected ? '🟢 Connecté' : '🔴 Déconnecté'}
+                <div style={{ fontSize: '12px', opacity: 0.9, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <div style={{
+                    width: '6px',
+                    height: '6px',
+                    borderRadius: '50%',
+                    background: isConnected ? colors.success : colors.error
+                  }} />
+                  {isConnected ? 'Connecté' : 'Déconnecté'}
                 </div>
               </div>
             </div>
             
-            <div style={{ display: 'flex', gap: '6px' }}>
+            <div style={{ display: 'flex', gap: '8px' }}>
               <button
-                onClick={startNewChat}
+                onClick={toggleMinimize}
                 style={{
-                  width: '32px',
-                  height: '32px',
-                  borderRadius: '8px',
+                  width: '36px',
+                  height: '36px',
+                  borderRadius: '10px',
                   border: 'none',
                   background: 'rgba(255,255,255,0.2)',
-                  color: colors.white,
+                  color: colors.text,
                   cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  transition: 'all 0.2s'
+                  transition: 'all 0.2s',
+                  backdropFilter: 'blur(10px)'
                 }}
-                title="Nouvelle conversation"
+                title={isMinimized ? 'Agrandir' : 'Réduire'}
               >
-                <Plus size={16} />
+                {isMinimized ? '+' : '-'}
               </button>
 
               <button
                 onClick={() => setShowMenu(!showMenu)}
                 style={{
-                  width: '32px',
-                  height: '32px',
-                  borderRadius: '8px',
+                  width: '36px',
+                  height: '36px',
+                  borderRadius: '10px',
                   border: 'none',
                   background: 'rgba(255,255,255,0.2)',
-                  color: colors.white,
+                  color: colors.text,
                   cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  transition: 'all 0.2s'
+                  transition: 'all 0.2s',
+                  backdropFilter: 'blur(10px)'
                 }}
               >
                 <Menu size={16} />
@@ -345,17 +387,18 @@ const FloatingChatBubble = () => {
               <button
                 onClick={toggleChat}
                 style={{
-                  width: '32px',
-                  height: '32px',
-                  borderRadius: '8px',
+                  width: '36px',
+                  height: '36px',
+                  borderRadius: '10px',
                   border: 'none',
                   background: 'rgba(255,255,255,0.2)',
-                  color: colors.white,
+                  color: colors.text,
                   cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  transition: 'all 0.2s'
+                  transition: 'all 0.2s',
+                  backdropFilter: 'blur(10px)'
                 }}
               >
                 <X size={16} />
@@ -363,116 +406,144 @@ const FloatingChatBubble = () => {
             </div>
           </div>
 
-          {/* Dropdown Menu */}
+          {/* Enhanced Dropdown Menu */}
           {showMenu && (
             <div style={{
               position: 'absolute',
-              top: '72px',
-              right: '16px',
-              background: colors.white,
-              borderRadius: '8px',
-              boxShadow: '0 8px 20px rgba(0,0,0,0.15)',
-              border: '1px solid rgba(0,0,0,0.1)',
+              top: '76px',
+              right: '20px',
+              background: colors.surfaceLight,
+              borderRadius: '12px',
+              boxShadow: '0 20px 40px rgba(0,0,0,0.3)',
+              border: `1px solid ${colors.border}`,
               zIndex: 1000,
-              padding: '6px',
-              minWidth: '160px'
+              padding: '8px',
+              minWidth: '180px',
+              backdropFilter: 'blur(20px)'
             }}>
+              <button
+                onClick={startNewChat}
+                style={{
+                  width: '100%',
+                  padding: '12px',
+                  background: 'none',
+                  border: 'none',
+                  borderRadius: '8px',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '10px',
+                  fontSize: '14px',
+                  color: colors.text,
+                  transition: 'all 0.2s'
+                }}
+                onMouseEnter={(e) => e.target.style.background = 'rgba(255,255,255,0.1)'}
+              >
+                <Plus size={16} />
+                Nouvelle conversation
+              </button>
+              
               <button
                 onClick={exportChat}
                 style={{
                   width: '100%',
-                  padding: '8px 12px',
+                  padding: '12px',
                   background: 'none',
                   border: 'none',
-                  borderRadius: '6px',
+                  borderRadius: '8px',
                   cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '8px',
-                  fontSize: '13px',
-                  color: colors.darkGray,
+                  gap: '10px',
+                  fontSize: '14px',
+                  color: colors.text,
                   transition: 'all 0.2s'
                 }}
-                onMouseEnter={(e) => e.target.style.background = colors.lightBlue}
+                onMouseEnter={(e) => e.target.style.background = 'rgba(255,255,255,0.1)'}
               >
-                <Download size={14} />
-                Exporter la conversation
+                <Download size={16} />
+                Exporter
               </button>
               
               <button
                 onClick={clearChat}
                 style={{
                   width: '100%',
-                  padding: '8px 12px',
+                  padding: '12px',
                   background: 'none',
                   border: 'none',
-                  borderRadius: '6px',
+                  borderRadius: '8px',
                   cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '8px',
-                  fontSize: '13px',
-                  color: colors.darkGray,
+                  gap: '10px',
+                  fontSize: '14px',
+                  color: colors.error,
                   transition: 'all 0.2s'
                 }}
-                onMouseEnter={(e) => e.target.style.background = colors.lightBlue}
+                onMouseEnter={(e) => e.target.style.background = 'rgba(239, 68, 68, 0.1)'}
               >
-                <Trash2 size={14} />
-                Effacer la conversation
+                <Trash2 size={16} />
+                Effacer
               </button>
             </div>
           )}
 
-          {/* Clear Chat Confirmation */}
+          {/* Enhanced Clear Chat Confirmation */}
           {showClearConfirm && (
             <div style={{
               position: 'absolute',
               top: '50%',
               left: '50%',
               transform: 'translate(-50%, -50%)',
-              background: colors.white,
-              borderRadius: '12px',
-              boxShadow: '0 15px 30px rgba(0,0,0,0.2)',
-              padding: '20px',
+              background: colors.surfaceLight,
+              borderRadius: '16px',
+              boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)',
+              padding: '24px',
               zIndex: 1001,
               textAlign: 'center',
-              border: '1px solid rgba(0,0,0,0.1)',
-              width: '280px'
+              border: `1px solid ${colors.border}`,
+              width: '300px',
+              backdropFilter: 'blur(20px)'
             }}>
-              <div style={{ fontSize: '16px', fontWeight: '600', marginBottom: '10px', color: colors.darkGray }}>
+              <div style={{ fontSize: '18px', fontWeight: 700, marginBottom: '12px', color: colors.text }}>
                 🗑️ Effacer la conversation
               </div>
-              <div style={{ fontSize: '13px', color: colors.gray, marginBottom: '16px' }}>
-                Êtes-vous sûr de vouloir effacer cette conversation ?
+              <div style={{ fontSize: '14px', color: colors.textMuted, marginBottom: '20px', lineHeight: 1.5 }}>
+                Êtes-vous sûr de vouloir effacer cette conversation ? Cette action est irréversible.
               </div>
-              <div style={{ display: 'flex', gap: '10px', justifyContent: 'center' }}>
+              <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
                 <button
                   onClick={cancelClear}
                   style={{
-                    padding: '8px 16px',
-                    background: colors.lightBlue,
-                    border: 'none',
-                    borderRadius: '8px',
+                    padding: '10px 20px',
+                    background: 'rgba(255,255,255,0.1)',
+                    border: `1px solid ${colors.border}`,
+                    borderRadius: '10px',
                     cursor: 'pointer',
-                    fontSize: '13px',
-                    fontWeight: '600',
-                    color: colors.primary
+                    fontSize: '14px',
+                    fontWeight: 600,
+                    color: colors.text,
+                    transition: 'all 0.2s'
                   }}
+                  onMouseEnter={(e) => e.target.style.background = 'rgba(255,255,255,0.2)'}
                 >
                   Annuler
                 </button>
                 <button
                   onClick={confirmClear}
                   style={{
-                    padding: '8px 16px',
-                    background: '#ef4444',
+                    padding: '10px 20px',
+                    background: colors.error,
                     border: 'none',
-                    borderRadius: '8px',
+                    borderRadius: '10px',
                     cursor: 'pointer',
-                    fontSize: '13px',
-                    fontWeight: '600',
-                    color: colors.white
+                    fontSize: '14px',
+                    fontWeight: 600,
+                    color: colors.text,
+                    transition: 'all 0.2s'
                   }}
+                  onMouseEnter={(e) => e.target.style.background = '#DC2626'}
                 >
                   Oui, effacer
                 </button>
@@ -480,340 +551,381 @@ const FloatingChatBubble = () => {
             </div>
           )}
 
-          {/* Messages Area */}
-          <div style={{
-            flex: 1,
-            overflowY: 'auto',
-            padding: '16px',
-            background: colors.lightBlue,
-            display: 'flex',
-            flexDirection: 'column'
-          }}>
-            {messages.length === 0 ? (
-              <div style={{ 
-                textAlign: 'center', 
-                color: colors.gray, 
-                padding: '30px 16px',
+          {!isMinimized && (
+            <>
+              {/* Enhanced Messages Area */}
+              <div style={{
                 flex: 1,
+                overflowY: 'auto',
+                padding: '20px',
+                background: `linear-gradient(135deg, ${colors.background}, ${colors.surface})`,
                 display: 'flex',
-                flexDirection: 'column',
-                justifyContent: 'center'
+                flexDirection: 'column'
               }}>
-                <div style={{ 
-                  width: '70px', 
-                  height: '70px', 
-                  borderRadius: '16px',
-                  background: `linear-gradient(135deg, ${colors.primary}, ${colors.secondary})`,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  margin: '0 auto 16px',
-                  fontSize: '28px',
-                  color: colors.white
-                }}>
-                  🤖
-                </div>
-                <h3 style={{ fontWeight: '600', marginBottom: '6px', color: colors.primary }}>
-                  Assistant Médical Intelligent
-                </h3>
-                <p style={{ fontSize: '13px', marginBottom: '24px', lineHeight: '1.4' }}>
-                  Posez n'importe quelle question médicale et je vous répondrai instantanément avec l'intelligence artificielle
-                </p>
-                
-                {/* Emergency Banner */}
-                <div style={{
-                  background: `linear-gradient(135deg, ${colors.secondary}, #2E7D32)`,
-                  color: colors.white,
-                  padding: '10px 14px',
-                  borderRadius: '10px',
-                  marginBottom: '20px',
-                  fontSize: '12px',
-                  fontWeight: '600'
-                }}>
-                  🚨 Urgence : Appelez le 190
-                </div>
-
-                {/* Quick Actions */}
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-                  {quickActions.map((action, index) => (
-                    <button
-                      key={index}
-                      onClick={() => handleQuickAction(action.prompt)}
-                      style={{
-                        background: colors.white,
-                        border: `1px solid ${colors.lightBlue}`,
-                        borderRadius: '12px',
-                        padding: '14px 6px',
-                        cursor: 'pointer',
-                        fontSize: '11px',
-                        fontWeight: '600',
-                        transition: 'all 0.2s',
-                        color: colors.primary
-                      }}
-                      onMouseEnter={(e) => {
-                        e.target.style.background = colors.primary;
-                        e.target.style.color = colors.white;
-                      }}
-                      onMouseLeave={(e) => {
-                        e.target.style.background = colors.white;
-                        e.target.style.color = colors.primary;
-                      }}
-                    >
-                      <div style={{ fontSize: '18px', marginBottom: '4px' }}>
-                        {action.emoji}
-                      </div>
-                      <div>{action.text}</div>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-                {messages.map((message) => (
-                  <div
-                    key={message.id}
-                    style={{
-                      display: 'flex',
-                      gap: '10px',
-                      alignItems: 'flex-start',
-                      flexDirection: message.type === 'user' ? 'row-reverse' : 'row'
-                    }}
-                  >
-                    {/* Avatar */}
-                    <div style={{
-                      width: '34px',
-                      height: '34px',
-                      borderRadius: '8px',
-                      background: message.type === 'user' ? colors.primary : colors.secondary,
+                {messages.length === 0 ? (
+                  <div style={{ 
+                    textAlign: 'center', 
+                    color: colors.textMuted, 
+                    padding: '40px 20px',
+                    flex: 1,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'center'
+                  }}>
+                    <div style={{ 
+                      width: '80px', 
+                      height: '80px', 
+                      borderRadius: '20px',
+                      background: `linear-gradient(135deg, ${colors.primary}, ${colors.primaryLight})`,
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      flexShrink: 0,
-                      color: colors.white,
-                      fontSize: '14px'
+                      margin: '0 auto 20px',
+                      fontSize: '32px',
+                      color: colors.text
                     }}>
-                      {message.type === 'user' ? '👤' : '🤖'}
+                      <Bot size={32} />
                     </div>
+                    <h3 style={{ fontWeight: 700, marginBottom: '8px', color: colors.text, fontSize: '18px' }}>
+                      Assistant Médical IA
+                    </h3>
+                    <p style={{ fontSize: '14px', marginBottom: '30px', lineHeight: 1.5 }}>
+                      Discutez avec votre assistant IA pour des conseils médicaux personnalisés
+                    </p>
                     
-                    {/* Message Bubble */}
+                    {/* Emergency Banner */}
                     <div style={{
-                      background: message.type === 'user' ? colors.primary : colors.white,
-                      color: message.type === 'user' ? colors.white : colors.darkGray,
-                      padding: '12px 14px',
-                      borderRadius: message.type === 'user' ? '14px 14px 4px 14px' : '14px 14px 14px 4px',
-                      maxWidth: '75%',
-                      border: message.type === 'user' ? 'none' : `1px solid ${colors.lightBlue}`,
+                      background: `linear-gradient(135deg, ${colors.error}, #DC2626)`,
+                      color: colors.text,
+                      padding: '12px 16px',
+                      borderRadius: '12px',
+                      marginBottom: '24px',
                       fontSize: '13px',
-                      lineHeight: '1.4',
-                      wordWrap: 'break-word'
+                      fontWeight: 600,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '8px'
                     }}>
-                      {message.text}
-                      
-                      {/* Rating Buttons */}
-                      {message.type === 'ai' && !message.isStreaming && (
-                        <div style={{ 
-                          display: 'flex', 
-                          gap: '6px', 
-                          marginTop: '10px'
-                        }}>
-                          <button
-                            onClick={() => rateResponse(message.id, 'like')}
-                            style={{
-                              width: '24px',
-                              height: '24px',
-                              borderRadius: '6px',
-                              border: '1px solid #d1d5db',
-                              background: message.rating === 'like' ? colors.secondary : colors.white,
-                              color: message.rating === 'like' ? colors.white : colors.gray,
-                              cursor: 'pointer',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center'
-                            }}
-                          >
-                            <ThumbsUp size={10} />
-                          </button>
-                          
-                          <button
-                            onClick={() => rateResponse(message.id, 'dislike')}
-                            style={{
-                              width: '24px',
-                              height: '24px',
-                              borderRadius: '6px',
-                              border: '1px solid #d1d5db',
-                              background: message.rating === 'dislike' ? '#ef4444' : colors.white,
-                              color: message.rating === 'dislike' ? colors.white : colors.gray,
-                              cursor: 'pointer',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center'
-                            }}
-                          >
-                            <ThumbsDown size={10} />
-                          </button>
-                        </div>
-                      )}
-                      
-                      {/* Typing Indicator */}
-                      {message.isStreaming && (
-                        <div style={{ display: 'flex', gap: '3px', marginTop: '6px' }}>
-                          {[0, 1, 2].map(i => (
-                            <div
-                              key={i}
-                              style={{
-                                width: '5px',
-                                height: '5px',
-                                borderRadius: '50%',
-                                background: message.type === 'user' ? 'rgba(255,255,255,0.6)' : colors.gray,
-                                animation: `bounce 1.4s infinite ${i * 0.2}s`
-                              }}
-                            />
-                          ))}
-                        </div>
-                      )}
+                      <span>🚨</span>
+                      Urgence : Appelez le 190
+                    </div>
+
+                    {/* Enhanced Quick Actions */}
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                      {quickActions.map((action, index) => (
+                        <button
+                          key={index}
+                          onClick={() => handleQuickAction(action.prompt)}
+                          style={{
+                            background: colors.surfaceLight,
+                            border: `1px solid ${colors.border}`,
+                            borderRadius: '14px',
+                            padding: '16px 8px',
+                            cursor: 'pointer',
+                            fontSize: '12px',
+                            fontWeight: 600,
+                            transition: 'all 0.3s ease',
+                            color: colors.text,
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            gap: '8px'
+                          }}
+                          onMouseEnter={(e) => {
+                            e.target.style.background = `linear-gradient(135deg, ${colors.primary}, ${colors.primaryLight})`;
+                            e.target.style.transform = 'translateY(-2px)';
+                          }}
+                          onMouseLeave={(e) => {
+                            e.target.style.background = colors.surfaceLight;
+                            e.target.style.transform = 'translateY(0)';
+                          }}
+                        >
+                          <div style={{ fontSize: '20px' }}>
+                            {action.emoji}
+                          </div>
+                          <div>{action.text}</div>
+                        </button>
+                      ))}
                     </div>
                   </div>
-                ))}
-                <div ref={messagesEndRef} />
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                    {messages.map((message) => (
+                      <div
+                        key={message.id}
+                        style={{
+                          display: 'flex',
+                          gap: '12px',
+                          alignItems: 'flex-start',
+                          flexDirection: message.type === 'user' ? 'row-reverse' : 'row'
+                        }}
+                      >
+                        {/* Enhanced Avatar */}
+                        <div style={{
+                          width: '36px',
+                          height: '36px',
+                          borderRadius: '10px',
+                          background: message.type === 'user' 
+                            ? `linear-gradient(135deg, ${colors.primary}, ${colors.primaryLight})`
+                            : `linear-gradient(135deg, ${colors.secondary}, #10B981)`,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          flexShrink: 0,
+                          color: colors.text,
+                          fontSize: '14px'
+                        }}>
+                          {message.type === 'user' ? <User size={16} /> : <Bot size={16} />}
+                        </div>
+                        
+                        {/* Enhanced Message Bubble */}
+                        <div style={{
+                          background: message.type === 'user' 
+                            ? `linear-gradient(135deg, ${colors.primary}, ${colors.primaryLight})`
+                            : colors.surfaceLight,
+                          color: message.type === 'user' ? colors.text : colors.text,
+                          padding: '14px 16px',
+                          borderRadius: message.type === 'user' ? '16px 16px 4px 16px' : '16px 16px 16px 4px',
+                          maxWidth: '75%',
+                          border: message.type === 'user' ? 'none' : `1px solid ${colors.border}`,
+                          fontSize: '14px',
+                          lineHeight: 1.5,
+                          wordWrap: 'break-word',
+                          boxShadow: message.type === 'user' ? '0 4px 12px rgba(99, 102, 241, 0.3)' : '0 2px 8px rgba(0,0,0,0.1)'
+                        }}>
+                          {message.text}
+                          
+                          {/* Enhanced Rating Buttons */}
+                          {message.type === 'ai' && !message.isStreaming && (
+                            <div style={{ 
+                              display: 'flex', 
+                              gap: '8px', 
+                              marginTop: '12px'
+                            }}>
+                              <button
+                                onClick={() => rateResponse(message.id, 'like')}
+                                style={{
+                                  width: '28px',
+                                  height: '28px',
+                                  borderRadius: '8px',
+                                  border: `1px solid ${colors.border}`,
+                                  background: message.rating === 'like' ? colors.success : colors.surfaceLight,
+                                  color: message.rating === 'like' ? colors.text : colors.textMuted,
+                                  cursor: 'pointer',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  transition: 'all 0.2s'
+                                }}
+                              >
+                                <ThumbsUp size={12} />
+                              </button>
+                              
+                              <button
+                                onClick={() => rateResponse(message.id, 'dislike')}
+                                style={{
+                                  width: '28px',
+                                  height: '28px',
+                                  borderRadius: '8px',
+                                  border: `1px solid ${colors.border}`,
+                                  background: message.rating === 'dislike' ? colors.error : colors.surfaceLight,
+                                  color: message.rating === 'dislike' ? colors.text : colors.textMuted,
+                                  cursor: 'pointer',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  transition: 'all 0.2s'
+                                }}
+                              >
+                                <ThumbsDown size={12} />
+                              </button>
+                            </div>
+                          )}
+                          
+                          {/* Enhanced Typing Indicator */}
+                          {message.isStreaming && (
+                            <div style={{ display: 'flex', gap: '4px', marginTop: '8px' }}>
+                              {[0, 1, 2].map(i => (
+                                <div
+                                  key={i}
+                                  style={{
+                                    width: '6px',
+                                    height: '6px',
+                                    borderRadius: '50%',
+                                    background: colors.primary,
+                                    animation: `bounce 1.4s infinite ${i * 0.2}s`
+                                  }}
+                                />
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                    <div ref={messagesEndRef} />
+                  </div>
+                )}
               </div>
-            )}
-          </div>
 
-          {/* Input Area */}
-          <div style={{
-            padding: '16px',
-            borderTop: `1px solid ${colors.lightBlue}`,
-            background: colors.white,
-            flexShrink: 0
-          }}>
-            <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-              <input
-                ref={inputRef}
-                type="text"
-                value={inputMessage}
-                onChange={(e) => setInputMessage(e.target.value)}
-                onKeyPress={handleKeyPress}
-                placeholder="Tapez votre question médicale ici..."
-                disabled={isLoading || !isConnected}
-                style={{
-                  flex: 1,
-                  padding: '12px 14px',
-                  border: `1px solid ${colors.lightBlue}`,
-                  borderRadius: '10px',
-                  outline: 'none',
-                  fontSize: '13px',
-                  background: colors.lightBlue,
-                  transition: 'all 0.2s'
-                }}
-                onFocus={(e) => {
-                  e.target.style.background = colors.white;
-                  e.target.style.borderColor = colors.primary;
-                }}
-                onBlur={(e) => {
-                  e.target.style.background = colors.lightBlue;
-                  e.target.style.borderColor = colors.lightBlue;
-                }}
-              />
-              <button
-                onClick={sendMessage}
-                disabled={!inputMessage.trim() || isLoading || !isConnected}
-                style={{
-                  width: '44px',
-                  height: '44px',
-                  background: colors.secondary,
-                  color: colors.white,
-                  border: 'none',
-                  borderRadius: '10px',
-                  cursor: inputMessage.trim() ? 'pointer' : 'not-allowed',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  transition: 'all 0.2s',
-                  opacity: inputMessage.trim() ? 1 : 0.6
-                }}
-              >
-                <Send size={16} />
-              </button>
-            </div>
-            <div style={{ textAlign: 'center', marginTop: '10px' }}>
-              <span style={{ fontSize: '10px', color: colors.gray }}>
-                ⚕️ Cet assistant ne remplace pas une consultation avec un médecin spécialisé
-              </span>
-            </div>
-          </div>
-
-          <style>
-            {`
-              @keyframes bounce {
-                0%, 80%, 100% { 
-                  transform: scale(0.8);
-                  opacity: 0.5;
-                }
-                40% { 
-                  transform: scale(1);
-                  opacity: 1;
-                }
-              }
-            `}
-          </style>
+              {/* Enhanced Input Area */}
+              <div style={{
+                padding: '20px',
+                borderTop: `1px solid ${colors.border}`,
+                background: colors.surface,
+                flexShrink: 0
+              }}>
+                <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                  <input
+                    ref={inputRef}
+                    type="text"
+                    value={inputMessage}
+                    onChange={(e) => setInputMessage(e.target.value)}
+                    onKeyPress={handleKeyPress}
+                    placeholder="Tapez votre question médicale ici..."
+                    disabled={isLoading || !isConnected}
+                    style={{
+                      flex: 1,
+                      padding: '14px 16px',
+                      border: `1px solid ${colors.border}`,
+                      borderRadius: '12px',
+                      outline: 'none',
+                      fontSize: '14px',
+                      background: colors.surfaceLight,
+                      color: colors.text,
+                      transition: 'all 0.2s'
+                    }}
+                    onFocus={(e) => {
+                      e.target.style.background = colors.background;
+                      e.target.style.borderColor = colors.primary;
+                    }}
+                    onBlur={(e) => {
+                      e.target.style.background = colors.surfaceLight;
+                      e.target.style.borderColor = colors.border;
+                    }}
+                  />
+                  <button
+                    onClick={sendMessage}
+                    disabled={!inputMessage.trim() || isLoading || !isConnected}
+                    style={{
+                      width: '48px',
+                      height: '48px',
+                      background: `linear-gradient(135deg, ${colors.primary}, ${colors.primaryLight})`,
+                      color: colors.text,
+                      border: 'none',
+                      borderRadius: '12px',
+                      cursor: inputMessage.trim() ? 'pointer' : 'not-allowed',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      transition: 'all 0.2s',
+                      opacity: inputMessage.trim() ? 1 : 0.6
+                    }}
+                  >
+                    <Send size={18} />
+                  </button>
+                </div>
+                <div style={{ textAlign: 'center', marginTop: '12px' }}>
+                  <span style={{ fontSize: '11px', color: colors.textMuted, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
+                    <Shield size={10} />
+                    ⚕️ Cet assistant ne remplace pas une consultation médicale professionnelle
+                  </span>
+                </div>
+              </div>
+            </>
+          )}
         </div>
       ) : (
-        /* Floating Button with AI Bot Icon */
+        /* Enhanced Floating Button */
         <div
           onMouseDown={handleMouseDown}
           onClick={toggleChat}
           style={{
-            width: '60px',
-            height: '60px',
-            borderRadius: '14px',
-            background: `linear-gradient(135deg, ${colors.primary}, ${colors.secondary})`,
-            color: colors.white,
+            width: '70px',
+            height: '70px',
+            borderRadius: '18px',
+            background: `linear-gradient(135deg, ${colors.primary}, ${colors.primaryLight})`,
+            color: colors.text,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             cursor: 'pointer',
-            boxShadow: '0 10px 25px rgba(102, 126, 234, 0.3)',
-            border: `2px solid ${colors.white}`,
-            fontSize: '24px',
-            transition: 'all 0.3s ease',
-            userSelect: 'none'
+            boxShadow: `0 20px 40px rgba(99, 102, 241, 0.4)`,
+            border: `2px solid rgba(255,255,255,0.2)`,
+            fontSize: '28px',
+            transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+            userSelect: 'none',
+            position: 'relative',
+            animation: 'pulse 2s ease-in-out infinite'
           }}
         >
-          🤖
+          <Bot size={28} />
+          
+          {/* Connection Status Dot */}
           {isConnected && (
             <div style={{
               position: 'absolute',
-              top: '6px',
-              right: '6px',
-              width: '10px',
-              height: '10px',
+              top: '8px',
+              right: '8px',
+              width: '12px',
+              height: '12px',
               borderRadius: '50%',
-              background: '#4CAF50',
-              border: `2px solid ${colors.white}`
+              background: colors.success,
+              border: `2px solid ${colors.surface}`,
+              boxShadow: '0 2px 8px rgba(16, 185, 129, 0.4)'
             }} />
           )}
+          
+          {/* Message Count Badge */}
           {messages.length > 1 && (
             <div style={{
               position: 'absolute',
-              top: '4px',
-              left: '4px',
-              width: '18px',
-              height: '18px',
+              top: '6px',
+              left: '6px',
+              width: '20px',
+              height: '20px',
               borderRadius: '50%',
-              background: '#FF9800',
-              color: 'white',
-              fontSize: '9px',
+              background: colors.accent,
+              color: colors.background,
+              fontSize: '10px',
               fontWeight: 'bold',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              border: `2px solid ${colors.white}`
+              border: `2px solid ${colors.surface}`,
+              boxShadow: '0 2px 8px rgba(245, 158, 11, 0.4)'
             }}>
               {messages.filter(m => m.type === 'user').length}
             </div>
           )}
         </div>
       )}
+
+      <style>
+        {`
+          @keyframes bounce {
+            0%, 80%, 100% { 
+              transform: scale(0.8);
+              opacity: 0.5;
+            }
+            40% { 
+              transform: scale(1);
+              opacity: 1;
+            }
+          }
+          
+          @keyframes pulse {
+            0%, 100% { 
+              transform: scale(1);
+              box-shadow: 0 20px 40px rgba(99, 102, 241, 0.4);
+            }
+            50% { 
+              transform: scale(1.05);
+              box-shadow: 0 25px 50px rgba(99, 102, 241, 0.6);
+            }
+          }
+        `}
+      </style>
     </div>
   );
 };
