@@ -1,12 +1,12 @@
-// FloatingChatBubble.jsx - UPDATED
+// FloatingChatBubble.jsx - UPDATED with return-to-corner behavior
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, X, Plus, Trash2, Download, Menu, ThumbsUp, ThumbsDown, Bot, User, Zap, Shield, Clock } from 'lucide-react';
+import { Send, X, Plus, Trash2, Download, Menu, ThumbsUp, ThumbsDown, Bot, User, Shield } from 'lucide-react';
 import io from 'socket.io-client';
 
 const FloatingChatBubble = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
-  const [position, setPosition] = useState({ x: 40, y: 40 });
+  const [position, setPosition] = useState({ x: window.innerWidth - 100, y: 40 }); // Start in right corner
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const [messages, setMessages] = useState([]);
   const [inputMessage, setInputMessage] = useState('');
@@ -137,7 +137,7 @@ const FloatingChatBubble = () => {
     }
   }, [messages, isOpen]);
 
-  // Enhanced dragging
+  // Enhanced dragging with return-to-corner behavior
   const handleMouseDown = (e) => {
     if (isOpen) {
       setIsDragging(true);
@@ -164,7 +164,47 @@ const FloatingChatBubble = () => {
   };
 
   const handleMouseUp = () => {
+    if (!isDragging) return;
+    
     setIsDragging(false);
+    
+    // Return to corner behavior
+    const widgetWidth = isOpen ? 400 : 70;
+    const threshold = 100; // Distance from edge to trigger return
+    
+    // Check if close to right edge
+    if (position.x > window.innerWidth - widgetWidth - threshold) {
+      setPosition({
+        x: window.innerWidth - widgetWidth - 20,
+        y: position.y
+      });
+    }
+    // Check if close to left edge
+    else if (position.x < threshold) {
+      setPosition({
+        x: 20,
+        y: position.y
+      });
+    }
+    // If in middle, check which edge is closer
+    else {
+      const distanceToRight = window.innerWidth - position.x - widgetWidth;
+      const distanceToLeft = position.x;
+      
+      if (distanceToRight < distanceToLeft) {
+        // Closer to right edge
+        setPosition({
+          x: window.innerWidth - widgetWidth - 20,
+          y: position.y
+        });
+      } else {
+        // Closer to left edge
+        setPosition({
+          x: 20,
+          y: position.y
+        });
+      }
+    }
   };
 
   useEffect(() => {
@@ -212,11 +252,23 @@ const FloatingChatBubble = () => {
   };
 
   const toggleChat = () => {
+    const wasOpen = isOpen;
     setIsOpen(!isOpen);
     setShowMenu(false);
-    setIsMinimized(false);
-    if (!isOpen) {
+    
+    if (!wasOpen && !isOpen) {
+      // Opening the chat - ensure it's in the right corner
+      setPosition({
+        x: window.innerWidth - 400 - 20,
+        y: Math.min(position.y, window.innerHeight - 600 - 20)
+      });
       setTimeout(() => inputRef.current?.focus(), 300);
+    } else if (wasOpen && !isOpen) {
+      // Closing the chat - return bubble to right corner
+      setPosition({
+        x: window.innerWidth - 70 - 20,
+        y: position.y
+      });
     }
   };
 
@@ -268,6 +320,26 @@ const FloatingChatBubble = () => {
       msg.id === messageId ? { ...msg, rating } : msg
     ));
   };
+
+  // Handle window resize to keep bubble in right corner
+  useEffect(() => {
+    const handleResize = () => {
+      if (!isOpen) {
+        setPosition({
+          x: window.innerWidth - 70 - 20,
+          y: position.y
+        });
+      } else {
+        setPosition({
+          x: window.innerWidth - 400 - 20,
+          y: Math.min(position.y, window.innerHeight - 600 - 20)
+        });
+      }
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [isOpen, position.y]);
 
   return (
     <div
@@ -361,7 +433,7 @@ const FloatingChatBubble = () => {
                 }}
                 title={isMinimized ? 'Agrandir' : 'Réduire'}
               >
-                {isMinimized ? '+' : '-'}
+                {isMinimized ? '+' : '−'}
               </button>
 
               <button
@@ -836,7 +908,7 @@ const FloatingChatBubble = () => {
           )}
         </div>
       ) : (
-        /* Enhanced Floating Button */
+        /* Enhanced Floating Button - Always returns to right corner */
         <div
           onMouseDown={handleMouseDown}
           onClick={toggleChat}
@@ -855,8 +927,7 @@ const FloatingChatBubble = () => {
             fontSize: '28px',
             transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
             userSelect: 'none',
-            position: 'relative',
-            animation: 'pulse 2s ease-in-out infinite'
+            position: 'relative'
           }}
         >
           <Bot size={28} />
@@ -872,7 +943,8 @@ const FloatingChatBubble = () => {
               borderRadius: '50%',
               background: colors.success,
               border: `2px solid ${colors.surface}`,
-              boxShadow: '0 2px 8px rgba(16, 185, 129, 0.4)'
+              boxShadow: '0 2px 8px rgba(16, 185, 129, 0.4)',
+              animation: 'pulse 2s ease-in-out infinite'
             }} />
           )}
           
@@ -916,12 +988,12 @@ const FloatingChatBubble = () => {
           
           @keyframes pulse {
             0%, 100% { 
+              opacity: 1;
               transform: scale(1);
-              box-shadow: 0 20px 40px rgba(99, 102, 241, 0.4);
             }
             50% { 
-              transform: scale(1.05);
-              box-shadow: 0 25px 50px rgba(99, 102, 241, 0.6);
+              opacity: 0.7;
+              transform: scale(1.1);
             }
           }
         `}
