@@ -1,7 +1,7 @@
-// FloatingChatBubble.jsx - FIXED with both icon and conversation returning to top right
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, X, Plus, Trash2, Download, Menu, ThumbsUp, ThumbsDown, Bot, User, Shield } from 'lucide-react';
+import { Send, X, Plus, Trash2, Download, Menu, ThumbsUp, ThumbsDown, Bot, User, Shield, Mic, MicOff, Video, Image, FileText, Zap, Heart, Star, Crown, Sparkles, MessageCircle } from 'lucide-react';
 import io from 'socket.io-client';
+import './FloatingChatBubble.css';
 
 const FloatingChatBubble = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -971,3 +971,4 @@ const FloatingChatBubble = () => {
 };
 
 export default FloatingChatBubble;
+
