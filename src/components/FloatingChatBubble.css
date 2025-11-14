@@ -1,0 +1,219 @@
+/* FloatingChatBubble.css - ULTIMATE ANIMATIONS */
+.floating-chat-super {
+  /* Base styles are handled inline */
+}
+
+/* Connection state animations */
+.floating-chat-super.connected .chat-header-super {
+  animation: connectedGlow 3s ease-in-out infinite;
+}
+
+.floating-chat-super.pulsing {
+  animation: superPulse 1s ease-in-out !important;
+}
+
+/* Message animations */
+.message-container.user .message-bubble-super {
+  animation: messageSlideInRight 0.3s ease-out;
+}
+
+.message-container.ai .message-bubble-super {
+  animation: messageSlideInLeft 0.3s ease-out;
+}
+
+/* Welcome message special effects */
+.message-container .message-bubble-super.welcome {
+  background: linear-gradient(135deg, #8B5CF6, #6366F1) !important;
+  color: white !important;
+  animation: welcomeMessage 0.5s ease-out;
+}
+
+/* Quick action hover enhancements */
+.quick-action-button {
+  position: relative;
+  overflow: hidden;
+}
+
+.quick-action-button::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.2);
+  transform: translate(-50%, -50%);
+  transition: width 0.3s, height 0.3s;
+}
+
+.quick-action-button:hover::after {
+  width: 100px;
+  height: 100px;
+}
+
+/* Voice recording effects */
+.voice-button.listening {
+  animation: voiceRecording 1.5s ease-in-out infinite;
+}
+
+/* Send button loading state */
+.send-button:disabled {
+  position: relative;
+  overflow: hidden;
+}
+
+.send-button:disabled::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+  animation: loadingShine 1.5s infinite;
+}
+
+/* Mood-based background effects */
+.floating-chat-super.calm {
+  filter: hue-rotate(180deg);
+}
+
+.floating-chat-super.urgent {
+  animation: urgentVibrate 0.1s infinite;
+}
+
+.floating-chat-super.positive {
+  filter: hue-rotate(120deg);
+}
+
+/* Advanced keyframes */
+@keyframes connectedGlow {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(16, 185, 129, 0.5);
+  }
+  50% {
+    box-shadow: 0 0 40px rgba(16, 185, 129, 0.8);
+  }
+}
+
+@keyframes messageSlideInRight {
+  0% {
+    opacity: 0;
+    transform: translateX(20px) scale(0.9);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+}
+
+@keyframes messageSlideInLeft {
+  0% {
+    opacity: 0;
+    transform: translateX(-20px) scale(0.9);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+}
+
+@keyframes welcomeMessage {
+  0% {
+    opacity: 0;
+    transform: scale(0.8) rotate(-5deg);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) rotate(0);
+  }
+}
+
+@keyframes voiceRecording {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.7);
+  }
+  50% {
+    transform: scale(1.1);
+    box-shadow: 0 0 0 10px rgba(245, 158, 11, 0);
+  }
+}
+
+@keyframes loadingShine {
+  0% {
+    left: -100%;
+  }
+  100% {
+    left: 100%;
+  }
+}
+
+@keyframes urgentVibrate {
+  0%, 100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-1px);
+  }
+  75% {
+    transform: translateX(1px);
+  }
+}
+
+/* Particle effects for celebrations */
+.confetti-particle {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  background: var(--particle-color, #6366F1);
+  border-radius: 50%;
+  animation: confettiFall 2s ease-in-out forwards;
+}
+
+@keyframes confettiFall {
+  0% {
+    transform: translateY(-100px) rotate(0deg);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(100vh) rotate(360deg);
+    opacity: 0;
+  }
+}
+
+/* Mobile optimizations */
+@media (max-width: 768px) {
+  .floating-chat-super {
+    transform: scale(0.9);
+    transform-origin: bottom right;
+  }
+  
+  .chat-window-super {
+    width: 350px !important;
+    height: 500px !important;
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .floating-chat-super,
+  .super-floating-button,
+  .message-bubble-super,
+  .quick-action-button {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+/* High contrast mode */
+@media (prefers-contrast: high) {
+  .floating-chat-super {
+    border: 2px solid white !important;
+  }
+  
+  .super-floating-button {
+    box-shadow: 0 0 0 2px white !important;
+  }
+}
